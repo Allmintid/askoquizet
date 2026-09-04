@@ -22,6 +22,7 @@ export default function PlayPage() {
   const [textAnswer, setTextAnswer] = useState('')
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [teamsLoaded, setTeamsLoaded] = useState(false)
 
   const teamId = localStorage.getItem('askoquizet_team_id')
 
@@ -32,7 +33,10 @@ export default function PlayPage() {
   useEffect(() => {
     const unsub1 = subscribeSession(setSession)
     const unsub2 = subscribeQuestions(setQuestions)
-    const unsub3 = subscribeTeams(setTeams)
+    const unsub3 = subscribeTeams((t) => {
+      setTeams(t)
+      setTeamsLoaded(true)
+    })
     const unsub4 = subscribeSubmissions(setSubmissions)
     return () => {
       unsub1()
@@ -43,6 +47,14 @@ export default function PlayPage() {
   }, [])
 
   const me = teams.find((t) => t.id === teamId)
+
+  useEffect(() => {
+    if (teamsLoaded && teamId && !me) {
+      localStorage.removeItem('askoquizet_team_id')
+      localStorage.removeItem('askoquizet_team_name')
+      navigate('/join')
+    }
+  }, [teamsLoaded, teamId, me, navigate])
   const currentQuestion = questions.find((q) => q.id === session?.currentQuestionId) ?? null
 
   useEffect(() => {
@@ -55,10 +67,6 @@ export default function PlayPage() {
     return submissions.find((s) => s.id === submissionId(currentQuestion.id, teamId)) ?? null
   }, [submissions, currentQuestion, teamId])
 
-  const sortedTeams = useMemo(
-    () => [...teams].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)),
-    [teams],
-  )
 
   if (!teamId) return null
 
@@ -98,7 +106,20 @@ export default function PlayPage() {
           <Avatar avatar={me.avatar} className="w-8 h-8 text-2xl" />
           <span className="font-display font-semibold">{me.name}</span>
         </div>
-        <Pill className="bg-teal text-cream">{me.score ?? 0} pts</Pill>
+        <div className="flex items-center gap-2">
+          <Pill className="bg-teal text-cream">{me.score ?? 0} pts</Pill>
+          <button
+            className="text-xs text-ink/40 underline"
+            onClick={() => {
+              if (!window.confirm(`Leave "${me.name}" and join as a different team?`)) return
+              localStorage.removeItem('askoquizet_team_id')
+              localStorage.removeItem('askoquizet_team_name')
+              navigate('/join')
+            }}
+          >
+            Leave
+          </button>
+        </div>
       </header>
 
       <div className="flex-1 flex flex-col">
@@ -106,7 +127,7 @@ export default function PlayPage() {
           <Card className="flex-1 flex flex-col items-center justify-center text-center gap-3">
             <p className="text-2xl">🎉</p>
             <h2 className="font-display text-xl font-bold">You're in!</h2>
-            <p className="text-ink/70">Waiting for the quizmaster to start…</p>
+            <p className="text-ink/70">Waiting for the game to begin…</p>
             <div className="mt-4 w-full">
               <p className="text-sm font-semibold text-ink/60 mb-2">
                 {teams.length} team{teams.length === 1 ? '' : 's'} joined
@@ -149,28 +170,20 @@ export default function PlayPage() {
           <RevealView question={currentQuestion} mySubmission={mySubmission} />
         )}
 
-        {(session.phase === 'scoreboard' || session.phase === 'finished') && (
-          <Card className="flex-1">
-            <h2 className="font-display text-xl font-bold mb-4 text-center">
-              {session.phase === 'finished' ? 'Final results 🏆' : 'Scoreboard'}
-            </h2>
-            <ol className="flex flex-col gap-2">
-              {sortedTeams.map((t, i) => (
-                <li
-                  key={t.id}
-                  className={`flex items-center justify-between rounded-xl px-3 py-2 ${
-                    t.id === teamId ? 'bg-yellow/40 font-semibold' : 'bg-cream-dim'
-                  }`}
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="text-ink/50 w-5">{i + 1}</span>
-                    <Avatar avatar={t.avatar} className="w-6 h-6 text-xl" />
-                    <span>{t.name}</span>
-                  </span>
-                  <span>{t.score ?? 0}</span>
-                </li>
-              ))}
-            </ol>
+        {session.phase === 'scoreboard' && (
+          <Card className="flex-1 flex flex-col items-center justify-center text-center gap-3">
+            <p className="text-2xl">👀</p>
+            <h2 className="font-display text-xl font-bold">Check the screen!</h2>
+            <p className="text-ink/70">The scoreboard is up front. Next question coming up…</p>
+          </Card>
+        )}
+
+        {session.phase === 'finished' && (
+          <Card className="flex-1 flex flex-col items-center justify-center text-center gap-3">
+            <p className="text-3xl">🏆</p>
+            <h2 className="font-display text-xl font-bold">Quiz finished!</h2>
+            <p className="text-ink/70">Final results are up on the screen.</p>
+            <Pill className="bg-teal text-cream text-lg mt-2">Your score: {me.score ?? 0}</Pill>
           </Card>
         )}
       </div>
