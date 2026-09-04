@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function sessionData() {
+      return get(/databases/$(database)/documents/sessions/main).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && sessionData().adminUid == request.auth.uid;
+    }
+
+    // Secret passcode doc — never readable by clients directly.
+    match /config/secret {
+      allow read, write: if false;
+    }
+
+    match /sessions/main {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        // claiming admin: no admin yet, passcode must match the secret doc
+        (
+          (!('adminUid' in resource.data) || resource.data.adminUid == null) &&
+          request.resource.data.adminUid == request.auth.uid &&
+          request.resource.data.passcodeAttempt ==
+            get(/databases/$(database)/documents/config/secret).data.passcode
+        ) ||
+        // the claimed admin making further changes
+        resource.data.adminUid == request.auth.uid
+      );
+    }
+
+    match /sessions/main/segments/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /sessions/main/questions/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /sessions/main/teams/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /sessions/main/submissions/{id} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.teamUid == request.auth.uid;
+      allow update: if isSignedIn() && (
+        (resource.data.teamUid == request.auth.uid && resource.data.graded == false) ||
+        isAdmin()
+      );
+    }
+  }
+}

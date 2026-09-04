@@ -1,0 +1,27 @@
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import type { User } from 'firebase/auth'
+import { waitForUser } from '../lib/firebase'
+
+interface AuthState {
+  user: User | null
+  loading: boolean
+}
+
+const AuthContext = createContext<AuthState>({ user: null, loading: true })
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    waitForUser()
+      .then(setUser)
+      .finally(() => setLoading(false))
+  }, [])
+
+  return <AuthContext.Provider value={{ user, loading }}>{children}</AuthContext.Provider>
+}
+
+export function useAuth() {
+  return useContext(AuthContext)
+}
