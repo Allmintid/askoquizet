@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import {
   subscribeQuestions,
   subscribeSession,
@@ -15,6 +16,7 @@ import { Avatar, Button, Card, PageShell, Pill } from '../../components/ui'
 export default function PlayPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const confirm = useConfirm()
   const [session, setSession] = useState<(SessionDoc & { id: string }) | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [teams, setTeams] = useState<Team[]>([])
@@ -87,9 +89,13 @@ export default function PlayPage() {
       currentQuestion.type === 'single_choice'
         ? currentQuestion.options?.find((o) => o.id === answer)?.text ?? answer
         : answer
-    if (!window.confirm(`Submit "${answerLabel}" as your answer? You won't be able to change it after.`)) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Är ni riktigt säkra?',
+      description: `Ni svarar: "${answerLabel}" — ni kan inte ändra svaret efteråt.`,
+      confirmLabel: 'Ja, skicka in',
+      cancelLabel: 'Avbryt',
+    })
+    if (!ok) return
 
     setSubmitting(true)
     try {
@@ -110,8 +116,14 @@ export default function PlayPage() {
           <Pill className="bg-teal text-cream">{me.score ?? 0} pts</Pill>
           <button
             className="text-xs text-ink/40 underline"
-            onClick={() => {
-              if (!window.confirm(`Leave "${me.name}" and join as a different team?`)) return
+            onClick={async () => {
+              const ok = await confirm({
+                title: 'Leave this team?',
+                description: `You'll leave "${me.name}" and can join as a different team.`,
+                confirmLabel: 'Leave',
+                variant: 'danger',
+              })
+              if (!ok) return
               localStorage.removeItem('askoquizet_team_id')
               localStorage.removeItem('askoquizet_team_name')
               navigate('/join')

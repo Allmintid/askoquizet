@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useConfirm } from '../../context/ConfirmContext'
 import {
   addQuestion,
   addSegment,
@@ -170,6 +171,7 @@ function BuildTab({ segments, questions }: { segments: Segment[]; questions: Que
 }
 
 function SegmentBlock({ segment, questions }: { segment: Segment; questions: Question[] }) {
+  const confirm = useConfirm()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(segment.title)
   const [adding, setAdding] = useState(false)
@@ -209,7 +211,13 @@ function SegmentBlock({ segment, questions }: { segment: Segment; questions: Que
               const suffix = questions.length
                 ? ` and its ${questions.length} question${questions.length === 1 ? '' : 's'}`
                 : ''
-              if (!window.confirm(`Delete segment "${segment.title}"${suffix}? This can't be undone.`)) return
+              const ok = await confirm({
+                title: `Delete segment "${segment.title}"?`,
+                description: `This removes the segment${suffix}. This can't be undone.`,
+                confirmLabel: 'Delete',
+                variant: 'danger',
+              })
+              if (!ok) return
               await Promise.all(questions.map((q) => deleteQuestion(q.id)))
               await deleteSegment(segment.id)
             }}
@@ -246,6 +254,7 @@ function SegmentBlock({ segment, questions }: { segment: Segment; questions: Que
 }
 
 function QuestionRow({ question }: { question: Question }) {
+  const confirm = useConfirm()
   const [editing, setEditing] = useState(false)
 
   if (editing) {
@@ -278,8 +287,14 @@ function QuestionRow({ question }: { question: Question }) {
         </button>
         <button
           className="text-sm text-red underline"
-          onClick={() => {
-            if (window.confirm('Delete this question? This can\'t be undone.')) deleteQuestion(question.id)
+          onClick={async () => {
+            const ok = await confirm({
+              title: 'Delete this question?',
+              description: "This can't be undone.",
+              confirmLabel: 'Delete',
+              variant: 'danger',
+            })
+            if (ok) deleteQuestion(question.id)
           }}
         >
           Delete
@@ -435,6 +450,7 @@ function LiveTab({
   teams: Team[]
   submissions: Submission[]
 }) {
+  const confirm = useConfirm()
   const orderedQuestions = useMemo(() => {
     const bySegment = [...segments].sort((a, b) => a.order - b.order)
     return bySegment.flatMap((seg) =>
@@ -449,7 +465,12 @@ function LiveTab({
   async function startQuiz() {
     const first = orderedQuestions[0]
     if (!first) return
-    if (!window.confirm(`Start the quiz for ${teams.length} joined team${teams.length === 1 ? '' : 's'}?`)) return
+    const ok = await confirm({
+      title: 'Start the quiz?',
+      description: `${teams.length} team${teams.length === 1 ? '' : 's'} joined so far.`,
+      confirmLabel: 'Start',
+    })
+    if (!ok) return
     await updateSession({
       phase: 'question',
       currentSegmentId: first.segmentId,
@@ -493,13 +514,13 @@ function LiveTab({
   }
 
   async function handleReset() {
-    if (
-      !window.confirm(
-        'Restart the quiz from the beginning? This clears all submissions and resets every team’s score to 0. Questions and joined teams stay put.',
-      )
-    ) {
-      return
-    }
+    const ok = await confirm({
+      title: 'Restart the quiz from the beginning?',
+      description: 'This clears all submissions and resets every team’s score to 0. Questions and joined teams stay put.',
+      confirmLabel: 'Restart',
+      variant: 'danger',
+    })
+    if (!ok) return
     await resetQuiz()
   }
 
@@ -588,8 +609,14 @@ function LiveTab({
               <button
                 className="ml-2 text-red"
                 title="Remove team"
-                onClick={() => {
-                  if (window.confirm(`Remove "${t.name}" from the quiz?`)) deleteTeam(t.id)
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: `Remove "${t.name}"?`,
+                    description: 'They will be removed from the quiz.',
+                    confirmLabel: 'Remove',
+                    variant: 'danger',
+                  })
+                  if (ok) deleteTeam(t.id)
                 }}
               >
                 ✕
