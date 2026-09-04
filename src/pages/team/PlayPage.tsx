@@ -21,6 +21,7 @@ export default function PlayPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [textAnswer, setTextAnswer] = useState('')
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const teamId = localStorage.getItem('askoquizet_team_id')
 
@@ -73,7 +74,21 @@ export default function PlayPage() {
     if (!currentQuestion || !user || !teamId) return
     const answer = currentQuestion.type === 'single_choice' ? selectedOption : textAnswer.trim()
     if (!answer) return
-    await submitAnswer(currentQuestion.id, teamId, user.uid, answer)
+
+    const answerLabel =
+      currentQuestion.type === 'single_choice'
+        ? currentQuestion.options?.find((o) => o.id === answer)?.text ?? answer
+        : answer
+    if (!window.confirm(`Submit "${answerLabel}" as your answer? You won't be able to change it after.`)) {
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      await submitAnswer(currentQuestion.id, teamId, user.uid, answer)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -116,6 +131,7 @@ export default function PlayPage() {
             selectedOption={selectedOption}
             setSelectedOption={setSelectedOption}
             onSubmit={handleSubmit}
+            submitting={submitting}
           />
         )}
 
@@ -170,6 +186,7 @@ function QuestionView({
   selectedOption,
   setSelectedOption,
   onSubmit,
+  submitting,
 }: {
   question: Question
   mySubmission: Submission | null
@@ -178,13 +195,21 @@ function QuestionView({
   selectedOption: string | null
   setSelectedOption: (v: string) => void
   onSubmit: () => void
+  submitting: boolean
 }) {
   if (mySubmission) {
+    const answerLabel =
+      question.type === 'single_choice'
+        ? question.options?.find((o) => o.id === mySubmission.answer)?.text ?? mySubmission.answer
+        : mySubmission.answer
     return (
       <Card className="flex-1 flex flex-col items-center justify-center text-center gap-3">
         <p className="text-2xl">✅</p>
         <h2 className="font-display text-xl font-bold">Answer submitted</h2>
-        <p className="text-ink/70">Waiting for the other teams…</p>
+        <p className="text-ink/70">
+          You answered: <span className="font-semibold text-ink">{answerLabel}</span>
+        </p>
+        <p className="text-ink/50 text-sm">Waiting for the other teams…</p>
       </Card>
     )
   }
@@ -228,10 +253,12 @@ function QuestionView({
 
       <Button
         onClick={onSubmit}
-        disabled={question.type === 'single_choice' ? !selectedOption : !textAnswer.trim()}
+        disabled={
+          submitting || (question.type === 'single_choice' ? !selectedOption : !textAnswer.trim())
+        }
         className="w-full text-xl mt-auto"
       >
-        Submit answer
+        {submitting ? 'Submitting…' : 'Submit answer'}
       </Button>
     </Card>
   )

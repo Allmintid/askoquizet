@@ -203,7 +203,17 @@ function SegmentBlock({ segment, questions }: { segment: Segment; questions: Que
               Rename
             </button>
           )}
-          <button className="text-sm text-red underline" onClick={() => deleteSegment(segment.id)}>
+          <button
+            className="text-sm text-red underline"
+            onClick={async () => {
+              const suffix = questions.length
+                ? ` and its ${questions.length} question${questions.length === 1 ? '' : 's'}`
+                : ''
+              if (!window.confirm(`Delete segment "${segment.title}"${suffix}? This can't be undone.`)) return
+              await Promise.all(questions.map((q) => deleteQuestion(q.id)))
+              await deleteSegment(segment.id)
+            }}
+          >
             Delete
           </button>
         </div>
@@ -266,7 +276,12 @@ function QuestionRow({ question }: { question: Question }) {
         <button className="text-sm underline" onClick={() => setEditing(true)}>
           Edit
         </button>
-        <button className="text-sm text-red underline" onClick={() => deleteQuestion(question.id)}>
+        <button
+          className="text-sm text-red underline"
+          onClick={() => {
+            if (window.confirm('Delete this question? This can\'t be undone.')) deleteQuestion(question.id)
+          }}
+        >
           Delete
         </button>
       </div>
@@ -434,6 +449,7 @@ function LiveTab({
   async function startQuiz() {
     const first = orderedQuestions[0]
     if (!first) return
+    if (!window.confirm(`Start the quiz for ${teams.length} joined team${teams.length === 1 ? '' : 's'}?`)) return
     await updateSession({
       phase: 'question',
       currentSegmentId: first.segmentId,
@@ -572,7 +588,9 @@ function LiveTab({
               <button
                 className="ml-2 text-red"
                 title="Remove team"
-                onClick={() => deleteTeam(t.id)}
+                onClick={() => {
+                  if (window.confirm(`Remove "${t.name}" from the quiz?`)) deleteTeam(t.id)
+                }}
               >
                 ✕
               </button>
