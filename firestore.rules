@@ -58,6 +58,7 @@ service cloud.firestore {
         (resource.data.teamUid == request.auth.uid && resource.data.graded == false) ||
         isAdmin()
       );
+      allow delete: if isAdmin();
     }
   }
 }

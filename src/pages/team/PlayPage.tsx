@@ -10,7 +10,7 @@ import {
   submitAnswer,
 } from '../../lib/store'
 import type { Question, SessionDoc, Submission, Team } from '../../types'
-import { Button, Card, PageShell, Pill } from '../../components/ui'
+import { Avatar, Button, Card, PageShell, Pill } from '../../components/ui'
 
 export default function PlayPage() {
   const { user } = useAuth()
@@ -80,7 +80,7 @@ export default function PlayPage() {
     <PageShell>
       <header className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">{me.avatar}</span>
+          <Avatar avatar={me.avatar} className="w-8 h-8 text-2xl" />
           <span className="font-display font-semibold">{me.name}</span>
         </div>
         <Pill className="bg-teal text-cream">{me.score ?? 0} pts</Pill>
@@ -99,7 +99,7 @@ export default function PlayPage() {
               <div className="flex flex-wrap gap-2 justify-center">
                 {teams.map((t) => (
                   <Pill key={t.id} className="bg-cream-dim">
-                    {t.avatar} {t.name}
+                    <Avatar avatar={t.avatar} className="w-5 h-5" /> {t.name}
                   </Pill>
                 ))}
               </div>
@@ -148,7 +148,7 @@ export default function PlayPage() {
                 >
                   <span className="flex items-center gap-2">
                     <span className="text-ink/50 w-5">{i + 1}</span>
-                    <span className="text-xl">{t.avatar}</span>
+                    <Avatar avatar={t.avatar} className="w-6 h-6 text-xl" />
                     <span>{t.name}</span>
                   </span>
                   <span>{t.score ?? 0}</span>

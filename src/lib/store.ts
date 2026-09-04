@@ -3,6 +3,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   increment,
   onSnapshot,
   orderBy,
@@ -11,6 +12,7 @@ import {
   setDoc,
   updateDoc,
   addDoc,
+  writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import type { Question, Segment, SessionDoc, SessionPhase, Submission, Team } from '../types'
@@ -166,4 +168,20 @@ export function addTeamScore(teamId: string, delta: number) {
   return updateDoc(doc(teamsCol, teamId), {
     score: increment(delta),
   })
+}
+
+// Rerun the quiz from the start: back to lobby, submissions cleared, scores
+// zeroed. Questions/segments and joined teams are left untouched.
+export async function resetQuiz() {
+  const [subsSnap, teamsSnap] = await Promise.all([getDocs(submissionsCol), getDocs(teamsCol)])
+
+  const batch = writeBatch(db)
+  subsSnap.docs.forEach((d) => batch.delete(d.ref))
+  teamsSnap.docs.forEach((d) => batch.update(d.ref, { score: 0 }))
+  batch.update(sessionRef, {
+    phase: 'lobby',
+    currentSegmentId: null,
+    currentQuestionId: null,
+  })
+  await batch.commit()
 }

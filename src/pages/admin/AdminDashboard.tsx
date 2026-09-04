@@ -17,9 +17,10 @@ import {
   updateQuestion,
   updateSegment,
   updateSession,
+  resetQuiz,
 } from '../../lib/store'
 import type { Question, QuestionOption, Segment, SessionDoc, Submission, Team } from '../../types'
-import { Button, Card, Pill } from '../../components/ui'
+import { Avatar, Button, Card, Pill } from '../../components/ui'
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth()
@@ -73,9 +74,19 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-dvh bg-cream text-ink">
       <div className="mx-auto max-w-4xl px-4 py-6">
-        <header className="flex items-center justify-between mb-6">
+        <header className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h1 className="font-display text-2xl font-bold text-teal">Quizmaster panel</h1>
-          <Pill className="bg-teal text-cream text-lg tracking-widest">{session.joinCode}</Pill>
+          <div className="flex items-center gap-3">
+            <a
+              href={`${import.meta.env.BASE_URL}present`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-semibold text-teal underline"
+            >
+              Open present view ↗
+            </a>
+            <Pill className="bg-teal text-cream text-lg tracking-widest">{session.joinCode}</Pill>
+          </div>
         </header>
 
         <div className="flex gap-2 mb-6">
@@ -465,6 +476,27 @@ function LiveTab({
     })
   }
 
+  async function handleReset() {
+    if (
+      !window.confirm(
+        'Restart the quiz from the beginning? This clears all submissions and resets every team’s score to 0. Questions and joined teams stay put.',
+      )
+    ) {
+      return
+    }
+    await resetQuiz()
+  }
+
+  async function goToQuestion(index: number) {
+    const q = orderedQuestions[index]
+    if (!q) return
+    await updateSession({
+      phase: 'question',
+      currentSegmentId: q.segmentId,
+      currentQuestionId: q.id,
+    })
+  }
+
   async function grade(sub: Submission, correct: boolean) {
     if (!currentQuestion) return
     const prevAwarded = sub.pointsAwarded ?? 0
@@ -496,8 +528,37 @@ function LiveTab({
                 {currentIndex + 1 >= orderedQuestions.length ? 'Finish quiz' : 'Next question'}
               </Button>
             )}
+            {session.phase !== 'lobby' && (
+              <Button variant="danger" onClick={handleReset}>
+                Restart quiz
+              </Button>
+            )}
           </div>
         </div>
+
+        {session.phase !== 'lobby' && orderedQuestions.length > 0 && (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-stone/20">
+            <button
+              className="text-sm font-semibold text-teal underline disabled:opacity-30 disabled:no-underline"
+              disabled={currentIndex <= 0}
+              onClick={() => goToQuestion(currentIndex - 1)}
+            >
+              ← Previous question
+            </button>
+            <span className="text-xs text-ink/50">
+              {currentIndex >= 0
+                ? `Question ${currentIndex + 1} of ${orderedQuestions.length}`
+                : 'Jump to a question'}
+            </span>
+            <button
+              className="text-sm font-semibold text-teal underline disabled:opacity-30 disabled:no-underline"
+              disabled={currentIndex < 0 || currentIndex + 1 >= orderedQuestions.length}
+              onClick={() => goToQuestion(currentIndex + 1)}
+            >
+              Next question →
+            </button>
+          </div>
+        )}
       </Card>
 
       <Card>
@@ -507,7 +568,7 @@ function LiveTab({
         <div className="flex flex-wrap gap-2">
           {teams.map((t) => (
             <Pill key={t.id} className="bg-cream-dim">
-              {t.avatar} {t.name} · {t.score ?? 0}pts
+              <Avatar avatar={t.avatar} className="w-5 h-5" /> {t.name} · {t.score ?? 0}pts
               <button
                 className="ml-2 text-red"
                 title="Remove team"
@@ -543,7 +604,9 @@ function LiveTab({
                   className="flex items-center justify-between gap-2 rounded-lg bg-cream-dim px-3 py-2"
                 >
                   <span className="min-w-0 truncate">
-                    <span className="font-semibold">{team?.avatar} {team?.name}: </span>
+                    <span className="font-semibold inline-flex items-center gap-1">
+                      {team && <Avatar avatar={team.avatar} className="w-4 h-4" />} {team?.name}:
+                    </span>{' '}
                     {answerLabel}
                   </span>
                   {currentQuestion.type === 'text' ? (

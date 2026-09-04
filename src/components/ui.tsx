@@ -44,6 +44,23 @@ export function Pill({ children, className = '' }: { children: ReactNode; classN
   )
 }
 
+export function isImageAvatar(avatar: string) {
+  return /^https?:\/\//.test(avatar)
+}
+
+export function Avatar({ avatar, className = '' }: { avatar: string; className?: string }) {
+  if (isImageAvatar(avatar)) {
+    return (
+      <img
+        src={avatar}
+        alt=""
+        className={`inline-block rounded-full object-cover align-middle ${className}`}
+      />
+    )
+  }
+  return <span className={`inline-block align-middle ${className}`}>{avatar}</span>
+}
+
 export function PageShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-cream text-ink flex flex-col">
