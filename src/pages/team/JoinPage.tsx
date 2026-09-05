@@ -101,14 +101,18 @@ export default function JoinPage() {
               <button
                 type="button"
                 onClick={() => setAvatarMode('emoji')}
-                className={`rounded-pill px-3 py-1 ${avatarMode === 'emoji' ? 'bg-teal text-cream' : ''}`}
+                className={`rounded-pill px-3 py-1 transition ${
+                  avatarMode === 'emoji' ? 'bg-teal text-cream hover:brightness-110' : 'hover:bg-stone/20'
+                }`}
               >
                 Emoji
               </button>
               <button
                 type="button"
                 onClick={() => setAvatarMode('image')}
-                className={`rounded-pill px-3 py-1 ${avatarMode === 'image' ? 'bg-teal text-cream' : ''}`}
+                className={`rounded-pill px-3 py-1 transition ${
+                  avatarMode === 'image' ? 'bg-teal text-cream hover:brightness-110' : 'hover:bg-stone/20'
+                }`}
               >
                 Image link
               </button>
@@ -123,7 +127,7 @@ export default function JoinPage() {
                   key={a}
                   onClick={() => setAvatar(a)}
                   className={`text-2xl rounded-xl py-2 transition ${
-                    avatar === a ? 'bg-teal scale-110 shadow' : 'bg-cream-dim'
+                    avatar === a ? 'bg-teal scale-110 shadow' : 'bg-cream-dim hover:bg-stone/20 hover:scale-105'
                   }`}
                 >
                   {a}

@@ -115,7 +115,7 @@ export default function PlayPage() {
         <div className="flex items-center gap-2">
           <Pill className="bg-teal text-cream">{me.score ?? 0} pts</Pill>
           <button
-            className="text-xs text-ink/40 underline"
+            className="rounded-pill px-3 py-1 text-xs font-semibold bg-cream-dim text-ink/50 transition hover:bg-stone/20"
             onClick={async () => {
               const ok = await confirm({
                 title: 'Leave this team?',
@@ -259,7 +259,7 @@ function QuestionView({
               className={`text-left rounded-xl border px-4 py-3 transition ${
                 selectedOption === opt.id
                   ? 'bg-teal text-cream border-teal'
-                  : 'bg-white border-stone/40'
+                  : 'bg-white border-stone/40 hover:border-teal/50 hover:bg-cream-dim'
               }`}
             >
               {opt.text}

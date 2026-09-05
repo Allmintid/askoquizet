@@ -82,7 +82,7 @@ export default function AdminDashboard() {
               href={`${import.meta.env.BASE_URL}present`}
               target="_blank"
               rel="noreferrer"
-              className="text-sm font-semibold text-teal underline"
+              className="rounded-pill px-3 py-1 text-sm font-semibold bg-teal/10 text-teal transition hover:bg-teal/20"
             >
               Open present view ↗
             </a>
@@ -126,8 +126,8 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`rounded-pill px-5 py-2 font-display font-semibold ${
-        active ? 'bg-teal text-cream' : 'bg-cream-dim text-ink/70'
+      className={`rounded-pill px-5 py-2 font-display font-semibold transition ${
+        active ? 'bg-teal text-cream hover:brightness-110' : 'bg-cream-dim text-ink/70 hover:bg-stone/20'
       }`}
     >
       {children}
@@ -201,12 +201,15 @@ function SegmentBlock({ segment, questions }: { segment: Segment; questions: Que
         )}
         <div className="flex gap-2 ml-2">
           {!editing && (
-            <button className="text-sm text-ink/50 underline" onClick={() => setEditing(true)}>
+            <button
+              className="rounded-pill px-3 py-1 text-xs font-semibold bg-cream-dim text-ink/60 transition hover:bg-stone/20"
+              onClick={() => setEditing(true)}
+            >
               Rename
             </button>
           )}
           <button
-            className="text-sm text-red underline"
+            className="rounded-pill px-3 py-1 text-xs font-semibold bg-red/10 text-red transition hover:bg-red/20"
             onClick={async () => {
               const suffix = questions.length
                 ? ` and its ${questions.length} question${questions.length === 1 ? '' : 's'}`
@@ -243,7 +246,7 @@ function SegmentBlock({ segment, questions }: { segment: Segment; questions: Que
         />
       ) : (
         <button
-          className="mt-3 text-sm font-semibold text-teal underline"
+          className="mt-3 self-start rounded-pill px-3 py-1 text-xs font-semibold bg-teal/10 text-teal transition hover:bg-teal/20"
           onClick={() => setAdding(true)}
         >
           + Add question
@@ -282,11 +285,14 @@ function QuestionRow({ question }: { question: Question }) {
         </div>
       </div>
       <div className="flex gap-2 shrink-0">
-        <button className="text-sm underline" onClick={() => setEditing(true)}>
+        <button
+          className="rounded-pill px-3 py-1 text-xs font-semibold bg-cream-dim text-ink/60 transition hover:bg-stone/20"
+          onClick={() => setEditing(true)}
+        >
           Edit
         </button>
         <button
-          className="text-sm text-red underline"
+          className="rounded-pill px-3 py-1 text-xs font-semibold bg-red/10 text-red transition hover:bg-red/20"
           onClick={async () => {
             const ok = await confirm({
               title: 'Delete this question?',
@@ -408,7 +414,7 @@ function QuestionForm({
               />
               {options.length > 2 && (
                 <button
-                  className="text-red text-sm"
+                  className="rounded-full w-6 h-6 flex items-center justify-center text-red text-sm transition hover:bg-red/10"
                   onClick={() => setOptions(options.filter((o) => o.id !== opt.id))}
                 >
                   ✕
@@ -417,7 +423,7 @@ function QuestionForm({
             </div>
           ))}
           <button
-            className="text-sm text-teal underline self-start"
+            className="self-start rounded-pill px-3 py-1 text-xs font-semibold bg-teal/10 text-teal transition hover:bg-teal/20"
             onClick={() => setOptions([...options, { id: crypto.randomUUID(), text: '' }])}
           >
             + Add option
@@ -576,7 +582,7 @@ function LiveTab({
         {session.phase !== 'lobby' && orderedQuestions.length > 0 && (
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-stone/20">
             <button
-              className="text-sm font-semibold text-teal underline disabled:opacity-30 disabled:no-underline"
+              className="rounded-pill px-3 py-1 text-xs font-semibold bg-teal/10 text-teal transition hover:bg-teal/20 disabled:opacity-30 disabled:pointer-events-none"
               disabled={currentIndex <= 0}
               onClick={() => goToQuestion(currentIndex - 1)}
             >
@@ -588,7 +594,7 @@ function LiveTab({
                 : 'Jump to a question'}
             </span>
             <button
-              className="text-sm font-semibold text-teal underline disabled:opacity-30 disabled:no-underline"
+              className="rounded-pill px-3 py-1 text-xs font-semibold bg-teal/10 text-teal transition hover:bg-teal/20 disabled:opacity-30 disabled:pointer-events-none"
               disabled={currentIndex < 0 || currentIndex + 1 >= orderedQuestions.length}
               onClick={() => goToQuestion(currentIndex + 1)}
             >
@@ -607,7 +613,7 @@ function LiveTab({
             <Pill key={t.id} className="bg-cream-dim">
               <Avatar avatar={t.avatar} className="w-5 h-5" /> {t.name} · {t.score ?? 0}pts
               <button
-                className="ml-2 text-red"
+                className="ml-2 rounded-full w-5 h-5 inline-flex items-center justify-center text-red transition hover:bg-red/10"
                 title="Remove team"
                 onClick={async () => {
                   const ok = await confirm({
@@ -657,16 +663,20 @@ function LiveTab({
                   {currentQuestion.type === 'text' ? (
                     <div className="flex gap-1 shrink-0">
                       <button
-                        className={`rounded-full px-2 py-1 text-xs font-bold ${
-                          sub.graded && sub.correct ? 'bg-green text-cream' : 'bg-white'
+                        className={`rounded-full px-2 py-1 text-xs font-bold transition ${
+                          sub.graded && sub.correct
+                            ? 'bg-green text-cream hover:brightness-110'
+                            : 'bg-white hover:bg-green/10'
                         }`}
                         onClick={() => grade(sub, true)}
                       >
                         ✓
                       </button>
                       <button
-                        className={`rounded-full px-2 py-1 text-xs font-bold ${
-                          sub.graded && sub.correct === false ? 'bg-red text-cream' : 'bg-white'
+                        className={`rounded-full px-2 py-1 text-xs font-bold transition ${
+                          sub.graded && sub.correct === false
+                            ? 'bg-red text-cream hover:brightness-110'
+                            : 'bg-white hover:bg-red/10'
                         }`}
                         onClick={() => grade(sub, false)}
                       >
