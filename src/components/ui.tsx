@@ -61,12 +61,57 @@ export function Avatar({ avatar, className = '' }: { avatar: string; className?:
   return <span className={`inline-block align-middle ${className}`}>{avatar}</span>
 }
 
+const FLOAT_MARKS = [
+  { left: '4%', size: '2.5rem', duration: '22s', delay: '0s' },
+  { left: '18%', size: '1.75rem', duration: '17s', delay: '5s' },
+  { left: '38%', size: '3rem', duration: '26s', delay: '2s' },
+  { left: '58%', size: '2rem', duration: '19s', delay: '9s' },
+  { left: '76%', size: '2.75rem', duration: '24s', delay: '4s' },
+  { left: '92%', size: '1.75rem', duration: '20s', delay: '12s' },
+]
+
+export function FloatingQuestionMarks({ className = '' }: { className?: string }) {
+  return (
+    <div className={`floating-marks ${className}`} aria-hidden="true">
+      {FLOAT_MARKS.map((m, i) => (
+        <span
+          key={i}
+          style={{ left: m.left, fontSize: m.size, animationDuration: m.duration, animationDelay: m.delay }}
+        >
+          ?
+        </span>
+      ))}
+    </div>
+  )
+}
+
+export function Header({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
+  const styles = variant === 'dark' ? 'border-cream/20 text-cream' : 'border-stone/30 text-ink'
+  return (
+    <header className={`relative z-10 shrink-0 border-b px-4 py-3 flex items-center justify-center ${styles}`}>
+      <h1 className="font-display font-bold text-lg tracking-wide">Asköquizet 2026</h1>
+    </header>
+  )
+}
+
+export function Footer({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
+  const styles = variant === 'dark' ? 'border-cream/20 text-cream/60' : 'border-stone/30 text-ink/50'
+  return (
+    <footer className={`relative z-10 shrink-0 border-t px-4 py-3 text-center text-xs ${styles}`}>
+      © Sebbelebebbe
+    </footer>
+  )
+}
+
 export function PageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-dvh bg-cream text-ink flex flex-col">
-      <div className="mx-auto w-full max-w-md flex-1 flex flex-col px-4 py-6 safe-bottom">
+    <div className="min-h-dvh bg-cream text-ink texture-light flex flex-col relative overflow-hidden">
+      <FloatingQuestionMarks className="text-ink/10" />
+      <Header />
+      <div className="relative z-10 mx-auto w-full max-w-md flex-1 flex flex-col px-4 py-6 safe-bottom">
         {children}
       </div>
+      <Footer />
     </div>
   )
 }
