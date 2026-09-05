@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   subscribeQuestions,
+  subscribeSegments,
   subscribeSession,
   subscribeSubmissions,
   subscribeTeams,
 } from '../lib/store'
-import type { Question, SessionDoc, Submission, Team } from '../types'
+import type { Question, Segment, SessionDoc, Submission, Team } from '../types'
 import { Avatar } from '../components/ui'
 
 export default function PresentPage() {
   const [session, setSession] = useState<(SessionDoc & { id: string }) | null>(null)
+  const [segments, setSegments] = useState<Segment[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -19,11 +21,13 @@ export default function PresentPage() {
     const u2 = subscribeQuestions(setQuestions)
     const u3 = subscribeTeams(setTeams)
     const u4 = subscribeSubmissions(setSubmissions)
+    const u5 = subscribeSegments(setSegments)
     return () => {
       u1()
       u2()
       u3()
       u4()
+      u5()
     }
   }, [])
 
@@ -66,6 +70,10 @@ export default function PresentPage() {
           </div>
           {teams.length === 0 && <p className="text-xl text-cream/70">Waiting for teams to join…</p>}
         </>
+      )}
+
+      {session.phase === 'overview' && (
+        <OverviewBoard segments={segments} questions={questions} teams={teams} />
       )}
 
       {(session.phase === 'question' || session.phase === 'locked') && currentQuestion && (
@@ -112,6 +120,65 @@ export default function PresentPage() {
         </>
       )}
     </div>
+  )
+}
+
+function OverviewBoard({
+  segments,
+  questions,
+  teams,
+}: {
+  segments: Segment[]
+  questions: Question[]
+  teams: Team[]
+}) {
+  const sortedSegments = useMemo(() => [...segments].sort((a, b) => a.order - b.order), [segments])
+
+  return (
+    <>
+      <h1 className="font-display text-5xl font-bold mb-10">What's coming up</h1>
+      <div className="w-full max-w-4xl grid sm:grid-cols-2 gap-8 text-left">
+        <div>
+          <h2 className="font-display text-2xl font-bold mb-4 text-yellow">
+            Segments ({sortedSegments.length})
+          </h2>
+          <ol className="flex flex-col gap-2">
+            {sortedSegments.map((seg, i) => {
+              const count = questions.filter((q) => q.segmentId === seg.id).length
+              return (
+                <li
+                  key={seg.id}
+                  className="flex items-center justify-between rounded-xl bg-cream/10 px-4 py-3 text-xl"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-cream/50 w-6 font-display font-bold">{i + 1}</span>
+                    {seg.title}
+                  </span>
+                  <span className="text-cream/60 text-base">
+                    {count} question{count === 1 ? '' : 's'}
+                  </span>
+                </li>
+              )
+            })}
+            {sortedSegments.length === 0 && <p className="text-cream/60 text-lg">No segments yet.</p>}
+          </ol>
+        </div>
+        <div>
+          <h2 className="font-display text-2xl font-bold mb-4 text-yellow">Teams ({teams.length})</h2>
+          <div className="flex flex-wrap gap-3">
+            {teams.map((t) => (
+              <span
+                key={t.id}
+                className="bg-cream text-ink rounded-pill px-4 py-2 text-lg font-semibold inline-flex items-center gap-2"
+              >
+                <Avatar avatar={t.avatar} className="w-6 h-6 text-xl" /> {t.name}
+              </span>
+            ))}
+            {teams.length === 0 && <p className="text-cream/60 text-lg">No teams joined yet.</p>}
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 
