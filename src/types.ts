@@ -1,5 +1,6 @@
 export type SessionPhase =
   | 'lobby'
+  | 'overview'
   | 'question'
   | 'locked'
   | 'reveal'

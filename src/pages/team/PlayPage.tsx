@@ -4,13 +4,14 @@ import { useAuth } from '../../context/AuthContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import {
   subscribeQuestions,
+  subscribeSegments,
   subscribeSession,
   subscribeSubmissions,
   subscribeTeams,
   submissionId,
   submitAnswer,
 } from '../../lib/store'
-import type { Question, SessionDoc, Submission, Team } from '../../types'
+import type { Question, Segment, SessionDoc, Submission, Team } from '../../types'
 import { Avatar, Button, Card, PageShell, Pill } from '../../components/ui'
 
 export default function PlayPage() {
@@ -18,6 +19,7 @@ export default function PlayPage() {
   const navigate = useNavigate()
   const confirm = useConfirm()
   const [session, setSession] = useState<(SessionDoc & { id: string }) | null>(null)
+  const [segments, setSegments] = useState<Segment[]>([])
   const [questions, setQuestions] = useState<Question[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -40,11 +42,13 @@ export default function PlayPage() {
       setTeamsLoaded(true)
     })
     const unsub4 = subscribeSubmissions(setSubmissions)
+    const unsub5 = subscribeSegments(setSegments)
     return () => {
       unsub1()
       unsub2()
       unsub3()
       unsub4()
+      unsub5()
     }
   }, [])
 
@@ -145,6 +149,51 @@ export default function PlayPage() {
                 {teams.length} team{teams.length === 1 ? '' : 's'} joined
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
+                {teams.map((t) => (
+                  <Pill key={t.id} className="bg-cream-dim">
+                    <Avatar avatar={t.avatar} className="w-5 h-5" /> {t.name}
+                  </Pill>
+                ))}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {session.phase === 'overview' && (
+          <Card className="flex-1 flex flex-col gap-4">
+            <div className="text-center">
+              <p className="text-2xl">📋</p>
+              <h2 className="font-display text-xl font-bold">Here's what's coming up</h2>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-ink/60 mb-2">
+                Segments ({segments.length})
+              </p>
+              <ol className="flex flex-col gap-2">
+                {[...segments]
+                  .sort((a, b) => a.order - b.order)
+                  .map((seg, i) => {
+                    const count = questions.filter((q) => q.segmentId === seg.id).length
+                    return (
+                      <li
+                        key={seg.id}
+                        className="flex items-center justify-between rounded-xl bg-cream-dim px-3 py-2"
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-ink/40 w-5 font-display font-bold">{i + 1}</span>
+                          {seg.title}
+                        </span>
+                        <span className="text-xs text-ink/50">
+                          {count} question{count === 1 ? '' : 's'}
+                        </span>
+                      </li>
+                    )
+                  })}
+              </ol>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-ink/60 mb-2">Teams ({teams.length})</p>
+              <div className="flex flex-wrap gap-2">
                 {teams.map((t) => (
                   <Pill key={t.id} className="bg-cream-dim">
                     <Avatar avatar={t.avatar} className="w-5 h-5" /> {t.name}

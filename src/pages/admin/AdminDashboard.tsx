@@ -468,7 +468,15 @@ function LiveTab({
   const currentQuestion = orderedQuestions[currentIndex] ?? null
   const currentSubs = submissions.filter((s) => s.questionId === currentQuestion?.id)
 
-  async function startQuiz() {
+  async function showOverview() {
+    await updateSession({ phase: 'overview' })
+  }
+
+  async function backToLobby() {
+    await updateSession({ phase: 'lobby' })
+  }
+
+  async function beginQuiz() {
     const first = orderedQuestions[0]
     if (!first) return
     const ok = await confirm({
@@ -559,9 +567,17 @@ function LiveTab({
           </div>
           <div className="flex gap-2 flex-wrap">
             {session.phase === 'lobby' && (
-              <Button onClick={startQuiz} disabled={orderedQuestions.length === 0}>
-                Start quiz
+              <Button onClick={showOverview} disabled={orderedQuestions.length === 0}>
+                Show overview
               </Button>
+            )}
+            {session.phase === 'overview' && (
+              <>
+                <Button variant="ghost" onClick={backToLobby}>
+                  Back to lobby
+                </Button>
+                <Button onClick={beginQuiz}>Start quiz</Button>
+              </>
             )}
             {session.phase === 'question' && <Button onClick={lockAnswers}>Lock answers</Button>}
             {session.phase === 'locked' && <Button onClick={reveal}>Reveal answer</Button>}
@@ -660,36 +676,30 @@ function LiveTab({
                     </span>{' '}
                     {answerLabel}
                   </span>
-                  {currentQuestion.type === 'text' ? (
-                    <div className="flex gap-1 shrink-0">
-                      <button
-                        className={`rounded-full px-2 py-1 text-xs font-bold transition ${
-                          sub.graded && sub.correct
-                            ? 'bg-green text-cream hover:brightness-110'
-                            : 'bg-white hover:bg-green/10'
-                        }`}
-                        onClick={() => grade(sub, true)}
-                      >
-                        ✓
-                      </button>
-                      <button
-                        className={`rounded-full px-2 py-1 text-xs font-bold transition ${
-                          sub.graded && sub.correct === false
-                            ? 'bg-red text-cream hover:brightness-110'
-                            : 'bg-white hover:bg-red/10'
-                        }`}
-                        onClick={() => grade(sub, false)}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    sub.graded && (
-                      <span className={sub.correct ? 'text-green' : 'text-red'}>
-                        {sub.correct ? '✓' : '✕'}
-                      </span>
-                    )
-                  )}
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      className={`rounded-full px-2 py-1 text-xs font-bold transition ${
+                        sub.graded && sub.correct
+                          ? 'bg-green text-cream hover:brightness-110'
+                          : 'bg-white hover:bg-green/10'
+                      }`}
+                      title="Mark correct"
+                      onClick={() => grade(sub, true)}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      className={`rounded-full px-2 py-1 text-xs font-bold transition ${
+                        sub.graded && sub.correct === false
+                          ? 'bg-red text-cream hover:brightness-110'
+                          : 'bg-white hover:bg-red/10'
+                      }`}
+                      title="Mark incorrect"
+                      onClick={() => grade(sub, false)}
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               )
             })}
