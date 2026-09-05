@@ -57,3 +57,55 @@ input, textarea, select {
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+.texture-light {
+  background-image: radial-gradient(circle at 1px 1px, rgba(28, 27, 24, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.texture-dark {
+  background-image: radial-gradient(circle at 1px 1px, rgba(242, 240, 235, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.floating-marks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-marks span {
+  position: absolute;
+  bottom: -10%;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: currentColor;
+  opacity: 0;
+  animation: float-question linear infinite;
+}
+
+@keyframes float-question {
+  0% {
+    transform: translateY(0) rotate(-8deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-115vh) rotate(8deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-marks span {
+    animation: none;
+    display: none;
+  }
+}

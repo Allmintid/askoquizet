@@ -7,7 +7,7 @@ import {
   subscribeTeams,
 } from '../lib/store'
 import type { Question, Segment, SessionDoc, Submission, Team } from '../types'
-import { Avatar } from '../components/ui'
+import { Avatar, FloatingQuestionMarks, Footer, Header } from '../components/ui'
 
 export default function PresentPage() {
   const [session, setSession] = useState<(SessionDoc & { id: string }) | null>(null)
@@ -40,6 +40,12 @@ export default function PresentPage() {
     () => [...teams].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)),
     [teams],
   )
+  const orderedQuestions = useMemo(() => {
+    const bySegment = [...segments].sort((a, b) => a.order - b.order)
+    return bySegment.flatMap((seg) =>
+      questions.filter((q) => q.segmentId === seg.id).sort((a, b) => a.order - b.order),
+    )
+  }, [segments, questions])
 
   if (!session) {
     return (
@@ -50,7 +56,10 @@ export default function PresentPage() {
   }
 
   return (
-    <div className="min-h-dvh bg-teal text-cream flex flex-col items-center justify-center p-10 text-center">
+    <div className="min-h-dvh bg-teal text-cream texture-dark flex flex-col relative overflow-hidden">
+      <FloatingQuestionMarks className="text-cream/10" />
+      <Header variant="dark" />
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-10 text-center">
       {session.phase === 'lobby' && (
         <>
           <h1 className="font-display text-6xl font-bold mb-4">Askoquizet</h1>
@@ -98,28 +107,94 @@ export default function PresentPage() {
       )}
 
       {(session.phase === 'scoreboard' || session.phase === 'finished') && (
-        <>
-          <h2 className="font-display text-5xl font-bold mb-8">
-            {session.phase === 'finished' ? 'Final results 🏆' : 'Scoreboard'}
-          </h2>
-          <ol className="flex flex-col gap-3 w-full max-w-2xl">
-            {sortedTeams.map((t, i) => (
-              <li
-                key={t.id}
-                className="flex items-center justify-between rounded-2xl bg-cream text-ink px-6 py-4 text-2xl"
-              >
+        <ScoreboardBoard
+          finished={session.phase === 'finished'}
+          sortedTeams={sortedTeams}
+          orderedQuestions={orderedQuestions}
+          submissions={submissions}
+        />
+      )}
+      </div>
+      <Footer variant="dark" />
+    </div>
+  )
+}
+
+function answerLabelFor(question: Question, submission: Submission) {
+  return question.type === 'single_choice'
+    ? question.options?.find((o) => o.id === submission.answer)?.text ?? submission.answer
+    : submission.answer
+}
+
+function lastGradedAnswer(
+  teamId: string,
+  wantCorrect: boolean,
+  orderedQuestions: Question[],
+  submissions: Submission[],
+) {
+  for (let i = orderedQuestions.length - 1; i >= 0; i--) {
+    const question = orderedQuestions[i]
+    const sub = submissions.find(
+      (s) => s.teamId === teamId && s.questionId === question.id && s.graded && s.correct === wantCorrect,
+    )
+    if (sub) return { question, answerLabel: answerLabelFor(question, sub) }
+  }
+  return null
+}
+
+function ScoreboardBoard({
+  finished,
+  sortedTeams,
+  orderedQuestions,
+  submissions,
+}: {
+  finished: boolean
+  sortedTeams: Team[]
+  orderedQuestions: Question[]
+  submissions: Submission[]
+}) {
+  return (
+    <>
+      <h2 className="font-display text-5xl font-bold mb-8">
+        {finished ? 'Final results 🏆' : 'Scoreboard'}
+      </h2>
+      <ol className="flex flex-col gap-3 w-full max-w-3xl">
+        {sortedTeams.map((t, i) => {
+          const lastCorrect = lastGradedAnswer(t.id, true, orderedQuestions, submissions)
+          const lastIncorrect = lastGradedAnswer(t.id, false, orderedQuestions, submissions)
+          return (
+            <li key={t.id} className="rounded-2xl bg-cream text-ink px-6 py-4">
+              <div className="flex items-center justify-between text-2xl">
                 <span className="flex items-center gap-3">
                   <span className="text-ink/40 w-8 font-display font-bold">{i + 1}</span>
                   <Avatar avatar={t.avatar} className="w-9 h-9 text-3xl" />
                   <span className="font-semibold">{t.name}</span>
                 </span>
                 <span className="font-display font-bold">{t.score ?? 0}</span>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
-    </div>
+              </div>
+              {(lastCorrect || lastIncorrect) && (
+                <div className="mt-3 pt-3 border-t border-stone/20 grid sm:grid-cols-2 gap-2 text-left text-sm">
+                  {lastCorrect && (
+                    <p className="text-green">
+                      <span className="font-semibold">✓ {lastCorrect.question.text}</span>
+                      {' — '}
+                      {lastCorrect.answerLabel}
+                    </p>
+                  )}
+                  {lastIncorrect && (
+                    <p className="text-red">
+                      <span className="font-semibold">✕ {lastIncorrect.question.text}</span>
+                      {' — '}
+                      {lastIncorrect.answerLabel}
+                    </p>
+                  )}
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+    </>
   )
 }
 

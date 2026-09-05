@@ -21,7 +21,7 @@ import {
   resetQuiz,
 } from '../../lib/store'
 import type { Question, QuestionOption, Segment, SessionDoc, Submission, Team } from '../../types'
-import { Avatar, Button, Card, Pill } from '../../components/ui'
+import { Avatar, Button, Card, Footer, Header, Pill } from '../../components/ui'
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth()
@@ -73,8 +73,9 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-dvh bg-cream text-ink">
-      <div className="mx-auto max-w-4xl px-4 py-6">
+    <div className="min-h-dvh bg-cream text-ink texture-light flex flex-col">
+      <Header />
+      <div className="mx-auto max-w-4xl px-4 py-6 flex-1 w-full">
         <header className="flex items-center justify-between mb-6 gap-3 flex-wrap">
           <h1 className="font-display text-2xl font-bold text-teal">Quizmaster panel</h1>
           <div className="flex items-center gap-3">
@@ -110,6 +111,7 @@ export default function AdminDashboard() {
           />
         )}
       </div>
+      <Footer />
     </div>
   )
 }
