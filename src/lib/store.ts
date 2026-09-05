@@ -164,6 +164,25 @@ export function gradeSubmission(id: string, correct: boolean, points: number) {
   })
 }
 
+export async function setSubmissionPoints(questionId: string, teamId: string, points: number) {
+  const ref = doc(submissionsCol, submissionId(questionId, teamId))
+  const snap = await getDoc(ref)
+  if (snap.exists()) {
+    await updateDoc(ref, { graded: true, correct: points > 0, pointsAwarded: points })
+  } else {
+    await setDoc(ref, {
+      questionId,
+      teamId,
+      teamUid: '',
+      answer: '',
+      submittedAt: serverTimestamp(),
+      graded: true,
+      correct: points > 0,
+      pointsAwarded: points,
+    })
+  }
+}
+
 export function addTeamScore(teamId: string, delta: number) {
   return updateDoc(doc(teamsCol, teamId), {
     score: increment(delta),

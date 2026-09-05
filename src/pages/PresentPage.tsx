@@ -58,7 +58,7 @@ export default function PresentPage() {
   return (
     <div className="min-h-dvh bg-teal text-cream texture-dark flex flex-col relative overflow-hidden">
       <FloatingQuestionMarks className="text-cream/10" />
-      <Header variant="dark" />
+      <Header />
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-10 text-center">
       {session.phase === 'lobby' && (
         <>
