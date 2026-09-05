@@ -10,6 +10,7 @@ import {
   deleteSegment,
   deleteTeam,
   gradeSubmission,
+  setSubmissionPoints,
   subscribeQuestions,
   subscribeSegments,
   subscribeSession,
@@ -550,13 +551,12 @@ function LiveTab({
     })
   }
 
-  async function grade(sub: Submission, correct: boolean) {
+  async function setPoints(teamId: string, sub: Submission | undefined, points: number) {
     if (!currentQuestion) return
-    const prevAwarded = sub.pointsAwarded ?? 0
-    await gradeSubmission(sub.id, correct, currentQuestion.points)
-    const newAwarded = correct ? currentQuestion.points : 0
-    const delta = newAwarded - prevAwarded
-    if (delta !== 0) await addTeamScore(sub.teamId, delta)
+    const prevAwarded = sub?.pointsAwarded ?? 0
+    await setSubmissionPoints(currentQuestion.id, teamId, points)
+    const delta = points - prevAwarded
+    if (delta !== 0) await addTeamScore(teamId, delta)
   }
 
   return (
@@ -661,46 +661,39 @@ function LiveTab({
             Submissions ({currentSubs.length}/{teams.length})
           </p>
           <div className="flex flex-col gap-2">
-            {currentSubs.map((sub) => {
-              const team = teams.find((t) => t.id === sub.teamId)
-              const answerLabel =
-                currentQuestion.type === 'single_choice'
+            {teams.map((team) => {
+              const sub = currentSubs.find((s) => s.teamId === team.id)
+              const answerLabel = sub
+                ? currentQuestion.type === 'single_choice'
                   ? currentQuestion.options?.find((o) => o.id === sub.answer)?.text ?? sub.answer
                   : sub.answer
+                : null
               return (
                 <div
-                  key={sub.id}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-cream-dim px-3 py-2"
+                  key={team.id}
+                  className="flex items-center justify-between gap-2 rounded-lg bg-cream-dim px-3 py-2 flex-wrap"
                 >
                   <span className="min-w-0 truncate">
                     <span className="font-semibold inline-flex items-center gap-1">
-                      {team && <Avatar avatar={team.avatar} className="w-4 h-4" />} {team?.name}:
+                      <Avatar avatar={team.avatar} className="w-4 h-4" /> {team.name}:
                     </span>{' '}
-                    {answerLabel}
+                    {answerLabel ?? <span className="text-ink/40">No answer</span>}
                   </span>
                   <div className="flex gap-1 shrink-0">
-                    <button
-                      className={`rounded-full px-2 py-1 text-xs font-bold transition ${
-                        sub.graded && sub.correct
-                          ? 'bg-green text-cream hover:brightness-110'
-                          : 'bg-white hover:bg-green/10'
-                      }`}
-                      title="Mark correct"
-                      onClick={() => grade(sub, true)}
-                    >
-                      ✓
-                    </button>
-                    <button
-                      className={`rounded-full px-2 py-1 text-xs font-bold transition ${
-                        sub.graded && sub.correct === false
-                          ? 'bg-red text-cream hover:brightness-110'
-                          : 'bg-white hover:bg-red/10'
-                      }`}
-                      title="Mark incorrect"
-                      onClick={() => grade(sub, false)}
-                    >
-                      ✕
-                    </button>
+                    {[0, 1, 2, 3, 4].map((pts) => (
+                      <button
+                        key={pts}
+                        className={`rounded-full w-7 h-7 text-xs font-bold transition ${
+                          sub?.graded && sub.pointsAwarded === pts
+                            ? 'bg-teal text-cream hover:brightness-110'
+                            : 'bg-white hover:bg-teal/10'
+                        }`}
+                        title={`Award ${pts} point${pts === 1 ? '' : 's'}`}
+                        onClick={() => setPoints(team.id, sub, pts)}
+                      >
+                        {pts}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )

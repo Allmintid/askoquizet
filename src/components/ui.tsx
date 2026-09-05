@@ -85,10 +85,12 @@ export function FloatingQuestionMarks({ className = '' }: { className?: string }
   )
 }
 
-export function Header({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
-  const styles = variant === 'dark' ? 'border-cream/20 text-cream' : 'border-stone/30 text-ink'
+export function Header() {
   return (
-    <header className={`relative z-10 shrink-0 border-b px-4 py-3 flex items-center justify-center ${styles}`}>
+    <header
+      className="relative z-10 shrink-0 border-b border-black/40 px-4 py-3 flex items-center justify-center text-cream"
+      style={{ backgroundColor: '#303030' }}
+    >
       <h1 className="font-display font-bold text-lg tracking-wide">Asköquizet 2026</h1>
     </header>
   )
